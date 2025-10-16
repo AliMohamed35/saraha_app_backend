@@ -1,15 +1,189 @@
-import { User } from "../../DB/models/user.model";
+import { User } from "../../DB/models/user.model.js";
+import bcrypt from "bcrypt";
+import { sendMail } from "../../utils/email/index.js";
+import { generateOTP } from "../../utils/otp/index.js";
 
-export const register = (req, res, next) => {
-  // get user data from body
-  const { userName, email, password, phoneNumber } = req.body;
+// register
+export const register = async (req, res) => {
+  try {
+    // get user data from body
+    const { fullName, email, password, phoneNumber, dob } = req.body;
 
-  // chek user existence
-  const userExist = User.findOne(req.body.email);
-  if (userExist) {
-    res.status(500).json({ message: "user already exist", success: false });
+    // chek user existence
+    const userExist = await User.findOne({
+      $or: [
+        {
+          $and: [
+            { email: { $ne: null } },
+            { email: { $exists: true } },
+            { email: email },
+          ],
+        },
+        {
+          $and: [
+            { phoneNumber: { $ne: null } },
+            { phoneNumber: { $exists: true } },
+            { phoneNumber: phoneNumber },
+          ],
+        },
+      ],
+    }); // {} | null
+    if (userExist) {
+      throw new Error("user already exist", { cause: 409 }); // conflict
+    }
+
+    // generate OTP
+    const otp = Math.floor(Math.random() * 90000 + 10000); // 10000 >>> minimum number
+    const otpExpire = Date.now() + 15 * 60 * 1000; // 15 minutes
+
+    // prepare data >> hash password >> encrypt phoneNumber >> factory design pattern
+    // insert user
+    const user = new User({
+      fullName,
+      email,
+      password: bcrypt.hashSync(password, 10),
+      phoneNumber,
+      dob,
+      otp,
+      otpExpire,
+    });
+    await user.save();
+
+    // send verifitcation email
+    await sendMail({
+      to: email,
+      subject: "Veify your account",
+      html: `<p>Your otp to verify your account is ${otp}</p>`,
+    });
+
+    // send response
+    return res.status(201).json({
+      message: " user created successfully",
+      success: true,
+      data: user,
+    });
+  } catch (error) {
+    res
+      .status(error.cause || 500)
+      .json({ message: error.message, status: false });
   }
+};
 
-  // insert user
-  User.insertOne({ userName: userName });
+// OTP
+export const verifyAccount = async (req, res) => {
+  try {
+    // get data from request
+    const { otp, email } = req.body;
+
+    //check if otp is okay and check the expire date
+    const userExist = await User.findOne({
+      email: email,
+      otp: otp,
+      otpExpire: { $gt: Date.now() },
+    });
+
+    if (!userExist) {
+      throw new Error("invalid OTP", { cause: 401 });
+    }
+
+    // update user (isVerified) >> true (until here i'm only updating the object located in RAM)
+    userExist.isVerified = true;
+    userExist.otp = undefined;
+    userExist.otpExpire = undefined;
+
+    // so we need to update data base layer also
+    await userExist.save();
+
+    // send response
+    res.status(200).json({
+      message: "user verified successfully",
+      success: true,
+      data: userExist,
+    });
+  } catch (error) {
+    res
+      .status(error.cause || 500)
+      .json({ message: error.message, success: false });
+  }
+};
+
+// resend OTP
+export const resendOTP = async (req, res) => {
+  try {
+    // get data from req.body
+    const { email } = req.body;
+
+    // generate new OTP and expire date
+    const { otp, otpExpire } = generateOTP();
+
+    // update user
+    await User.updateOne({ email: email }, { otp, otpExpire });
+
+    // resend email
+    await sendMail({
+      to: email,
+      subject: "re-sent OTP",
+      html: `<p>Your otp to verify your account is ${otp}</p>`,
+    });
+
+    // send response
+    return res.status(201).json({
+      message: "OTP resent successfully",
+      success: true,
+    });
+  } catch (error) {
+    res
+      .status(error.cause || 500)
+      .json({ message: error.message, success: false });
+  }
+};
+
+// login
+export const login = async (req, res) => {
+  try {
+    // get data from request
+    const { email, password, phoneNumber } = req.body;
+
+    // check user existence
+    const userExist = await User.findOne({
+      $or: [
+        {
+          $and: [
+            { email: { $exists: true } },
+            { email: { $ne: null } },
+            { email: email },
+          ],
+        },
+        {
+          $and: [
+            { phoneNumber: { $exists: true } },
+            { phoneNumber: { $ne: null } },
+            { phoneNumber: phoneNumber },
+          ],
+        },
+      ],
+    });
+
+    if (!userExist) {
+      throw new Error("invalid credentials", { cause: 404 });
+    }
+
+    // compare password
+    const match = bcrypt.compareSync(password, userExist.password);
+    if (!match) {
+      throw new Error("invalid credentials", { cause: 401 });
+    }
+    // generate token
+
+    // send response
+    return res.status(200).json({
+      message: " user logged in successfully",
+      succes: true,
+      data: userExist,
+    });
+  } catch (error) {
+    res
+      .status(error.cause || 500)
+      .json({ message: error.message, success: false });
+  }
 };

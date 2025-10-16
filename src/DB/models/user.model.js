@@ -16,8 +16,15 @@ const schema = new Schema(
     },
     email: {
       type: String,
-      required: true,
-      unique: true,
+      required: function () {
+        if (this.phoneNumber) {
+          // this is to make it dynamic
+          // if there is phoneNumber then the email in optional
+          return false;
+        }
+        return true;
+      },
+      // unique: true,
       trim: true,
       lowercase: true,
     },
@@ -27,12 +34,43 @@ const schema = new Schema(
     },
     phoneNumber: {
       type: String,
-      required: true,
-      unique: true,
+      required: function () {
+        if (this.email) return false;
+        return true;
+      },
+      // unique: true,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    dob: {
+      type: Date,
+    },
+    otp: {
+      type: Number,
+    },
+    otpExpire: {
+      type: Date,
     },
   },
-  { timestamps: true }
+  { timestamps: true, toObject: { virtuals: true }, toJSON: { virtuals: true } }
 );
+
+// Virtual fields
+schema.virtual("fullName").get(function () {
+  return `${this.firstName} ${this.lastName}`;
+});
+
+schema.virtual("fullName").set(function (value) {
+  const [firstName, lastName] = value.split(" ");
+  this.firstName = firstName;
+  this.lastName = lastName;
+});
+
+schema.virtual("age").get(function () {
+  return new Date().getFullYear() - new Date(this.dob).getFullYear();
+});
 
 // Model
 export const User = model("user", schema);
