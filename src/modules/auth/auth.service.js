@@ -2,6 +2,7 @@ import { User } from "../../DB/models/user.model.js";
 import bcrypt from "bcrypt";
 import { sendMail } from "../../utils/email/index.js";
 import { generateOTP } from "../../utils/otp/index.js";
+import { OAuth2Client } from "google-auth-library";
 
 // register
 export const register = async (req, res) => {
@@ -181,6 +182,46 @@ export const login = async (req, res) => {
       succes: true,
       data: userExist,
     });
+  } catch (error) {
+    res
+      .status(error.cause || 500)
+      .json({ message: error.message, success: false });
+  }
+};
+
+export const googleLogin = async (req, res) => {
+  try {
+    // get data from req >> token
+    const { idToken } = req.body;
+
+    // verify idToken
+    const client = new OAuth2Client(
+      "560034876335-2k6giia2i0q1s8mpabo5vctvte2i4h50.apps.googleusercontent.com"
+    );
+
+    const ticket = await client.verifyIdToken({ idToken });
+
+    const payload = ticket.getPayload(); // {email, name, picture, phoneNumber}
+
+    // check user
+    let userExist = await User.findOne({ email: payload.email }); // {} || null
+
+    if (!userExist) {
+      userExist = await User.create({
+        fullName: payload.name,
+        email: payload.email,
+        phoneNumber: payload.phon,
+        dob: payload.birthdate,
+        isVerified: true,
+        userAgent: "google",
+      });
+
+      res.status(200).json({
+        message: "login successfully",
+        success: true,
+        data: userExist,
+      });
+    }
   } catch (error) {
     res
       .status(error.cause || 500)
