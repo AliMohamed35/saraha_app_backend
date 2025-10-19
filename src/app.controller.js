@@ -20,6 +20,16 @@ function bootstrap(app, express) {
   app.use("/auth", authRouter);
   app.use("/user", userRouter);
   // app.use("/message", messageRouter);
+
+  // global error handler
+  app.use((error, req, res, next) => {
+    res.status(error.cause || 500).json({
+      message: error.message,
+      success: false,
+      // stack: error.stack,
+      globalErrorHandler: true,
+    });
+  });
 }
 
 export default bootstrap;
