@@ -151,6 +151,10 @@ export const login = async (req, res) => {
     throw new Error("invalid credentials", { cause: 404 });
   }
 
+  if (userExist.isVerified == false) {
+    throw new Error("user not verified", { cause: 401 });
+  }
+
   // compare password
   const match = bcrypt.compareSync(password, userExist.password);
   if (!match) {

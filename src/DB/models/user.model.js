@@ -63,6 +63,9 @@ const schema = new Schema(
       enum: ["local", "google"],
       default: "local",
     },
+    profilePic: {
+      type: String, // path
+    },
   },
   { timestamps: true, toObject: { virtuals: true }, toJSON: { virtuals: true } }
 );
