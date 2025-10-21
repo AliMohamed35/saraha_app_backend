@@ -1,6 +1,6 @@
 import { User } from "../../DB/models/user.model.js";
+import fs from "fs";
 import jwt from "jsonwebtoken";
-import { verifyToken } from "../../utils/token/index.js";
 
 export const deleteAccount = async (req, res) => {
   // get data from token >> req.headers.authorization
@@ -23,13 +23,14 @@ export const deleteAccount = async (req, res) => {
 };
 
 export const uploadProfilePicture = async (req, res, next) => {
-  // res.json({ reqFile: req.file.path }); // req. file came from multer
-  const token = req.headers.authorization;
-  const { id } = verifyToken(token); // destructing the id from the payload
+  // delete old image
+  if (req.user.profilePic) {
+    fs.unlinkSync(req.user.profilePic);
+  }
 
   // update logged in user profilePicture >> path >> req.file
   const userExist = await User.findByIdAndUpdate(
-    id,
+    req.user._id,
     {
       profilePic: req.file.path,
     },
