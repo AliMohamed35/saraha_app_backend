@@ -1,6 +1,7 @@
 import { User } from "../../DB/models/user.model.js";
 import fs from "fs";
 import jwt from "jsonwebtoken";
+import cloudinary from "../../utils/cloud/cloudinary.config.js";
 
 export const deleteAccount = async (req, res) => {
   // get data from token >> req.headers.authorization
@@ -46,4 +47,27 @@ export const uploadProfilePicture = async (req, res, next) => {
     success: true,
     data: userExist,
   });
+};
+
+export const uploadProfilePictureCloud = async (req, res, next) => {
+  const user = req.user; // from isAuthenticated
+  const file = req.file;
+
+  const { secure_url, public_id } = await cloudinary.uploader.upload(
+    req.file.path
+  );
+
+  // update in data base
+  await User.updateOne(
+    { _id: req.user._id },
+    { profilePic: { secure_url, public_id } }
+  );
+
+  return res
+    .status(200)
+    .json({
+      message: "profile picture updated successfully",
+      success: true,
+      data: { secure_url, public_id },
+    });
 };

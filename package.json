@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "start:dev": "node --watch ."
+    "start:dev": "node --env-file=config/local.env --watch ."
   },
   "keywords": [],
   "author": "",
@@ -12,6 +12,7 @@
   "type": "module",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "file-type": "^21.0.0",

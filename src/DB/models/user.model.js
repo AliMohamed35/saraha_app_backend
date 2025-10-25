@@ -64,7 +64,8 @@ const schema = new Schema(
       default: "local",
     },
     profilePic: {
-      type: String, // path
+      secure_url: String,
+      public_id: String,
     },
   },
   { timestamps: true, toObject: { virtuals: true }, toJSON: { virtuals: true } }
