@@ -7,8 +7,9 @@ export async function sendMail({ to, subject, html }) {
     port: 587,
 
     auth: {
-      user: "alimohameddev35@gmail.com",
-      pass: "nxau emlg rgkc gjes",
+      user: process.env.EMAIL_USER,
+      pass: process.env.USER_PASS,
+      // pass: "nxau emlg rgkc gjes",
     },
   });
 

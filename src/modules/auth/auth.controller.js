@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { isValide } from "../../middleware/validation.middleware.js";
 import { joiSchema } from "./auth.validation.js";
-import { fileUpload } from "../../utils/multer/index.js";
+import { fileUpload } from "../../utils/multer/multer.local.js";
 import * as authService from "./auth.service.js";
 const router = Router();
 
