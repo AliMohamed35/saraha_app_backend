@@ -6,7 +6,7 @@ import * as userService from "./user.service.js";
 import { isAuthenticated } from "../../middleware/auth.middleware.js";
 const router = Router();
 
-router.delete("/", userService.deleteAccount);
+router.delete("/", isAuthenticated, userService.deleteAccount);
 router.post(
   "/upload-profile-picture",
   isAuthenticated,

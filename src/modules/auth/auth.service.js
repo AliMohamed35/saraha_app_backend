@@ -1,11 +1,11 @@
 import { User } from "../../DB/models/user.model.js";
-import bcrypt from "bcrypt";
 import { sendMail } from "../../utils/email/index.js";
 import { generateOTP } from "../../utils/otp/index.js";
 import { OAuth2Client } from "google-auth-library";
+import { comparePassword, hashPassword } from "../../utils/hash/index.js";
 import jwt from "jsonwebtoken";
 
-// register
+// Register
 export const register = async (req, res) => {
   // get user data from body
   const { fullName, email, password, phoneNumber, dob } = req.body;
@@ -41,7 +41,7 @@ export const register = async (req, res) => {
   const user = new User({
     fullName,
     email,
-    password: bcrypt.hashSync(password, 10),
+    password: hashPassword(password),
     phoneNumber,
     dob,
     otp,
@@ -97,7 +97,7 @@ export const verifyAccount = async (req, res) => {
   });
 };
 
-// resend OTP
+// Resend OTP
 export const resendOTP = async (req, res) => {
   // get data from req.body
   const { email } = req.body;
@@ -106,8 +106,14 @@ export const resendOTP = async (req, res) => {
   const { otp, otpExpire } = generateOTP();
 
   // update user
-  await User.updateOne({ email: email }, { otp, otpExpire });
-
+  const userExist = await User.findOneAndUpdate(
+    { email: email },
+    { otp, otpExpire }
+  );
+  // check existence
+  if (!userExist) {
+    throw new Error("user doesn'\t exist", { cause: 404 });
+  }
   // resend email
   await sendMail({
     to: email,
@@ -122,7 +128,7 @@ export const resendOTP = async (req, res) => {
   });
 };
 
-// login
+// Login
 export const login = async (req, res) => {
   // get data from request
   const { email, password, phoneNumber } = req.body;
@@ -156,7 +162,7 @@ export const login = async (req, res) => {
   }
 
   // compare password
-  const match = bcrypt.compareSync(password, userExist.password);
+  const match = comparePassword(password, userExist.password);
   if (!match) {
     throw new Error("invalid credentials", { cause: 401 });
   }
@@ -175,7 +181,7 @@ export const login = async (req, res) => {
   });
 };
 
-// google OAuth
+// Google OAuth
 export const googleLogin = async (req, res) => {
   // get data from req >> token
   const { idToken } = req.body;
@@ -208,4 +214,34 @@ export const googleLogin = async (req, res) => {
       data: userExist,
     });
   }
+};
+
+// Reset password
+export const resetPassword = async (req, res, next) => {
+  // get data from request
+  const { email, otp, newPassword } = req.body;
+
+  // check userExistence
+  const userExist = await User.findOne({ email });
+  if (!userExist) {
+    throw new Error("User not found", { cause: 404 });
+  }
+
+  // check otp valid or not
+  if (userExist.otp != otp) {
+    throw new Error("Invalid otp", { cause: 401 }); // unauthorized
+  }
+
+  // check expData for otp
+  if (userExist.otpExpire < Date.now()) {
+    throw new Error("OTP expired", { cause: 400 }); // bad request
+  }
+
+  // update user
+  userExist.password = hashPassword(newPassword);
+  await userExist.save();
+
+  return res
+    .status(200)
+    .json({ message: "Password updated successfully", success: true });
 };
