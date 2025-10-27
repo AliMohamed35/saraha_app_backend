@@ -2,7 +2,9 @@ import { Router } from "express";
 import { isValide } from "../../middleware/validation.middleware.js";
 import { joiSchema, resetPasswordSchema } from "./auth.validation.js";
 import { fileUpload } from "../../utils/multer/multer.local.js";
+import { isAuthenticated } from "../../middleware/auth.middleware.js";
 import * as authService from "./auth.service.js";
+
 const router = Router();
 
 router.post(
@@ -20,5 +22,6 @@ router.patch(
   authService.resetPassword
 );
 router.post("/google-login", authService.googleLogin);
+router.post("/logout", isAuthenticated, authService.logout);
 
 export default router;
