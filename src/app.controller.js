@@ -1,6 +1,6 @@
 import { connectDB } from "./DB/connection.js";
 import { authRouter, userRouter } from "./modules/index.js";
-import fs from "node:fs";
+import { globalErrorHandler } from "./utils/error/index.js";
 import cors from "cors";
 
 function bootstrap(app, express) {
@@ -23,17 +23,7 @@ function bootstrap(app, express) {
   // app.use("/message", messageRouter);
 
   // global error handler
-  app.use((error, req, res, next) => {
-    if (req.file) {
-      fs.unlinkSync(req.file.path);
-    }
-    res.status(error.cause || 500).json({
-      message: error.message,
-      success: false,
-      stack: error.stack,
-      globalErrorHandler: true,
-    });
-  });
+  app.use(globalErrorHandler);
 }
 
 export default bootstrap;

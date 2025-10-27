@@ -4,6 +4,8 @@ import { generateOTP } from "../../utils/otp/index.js";
 import { OAuth2Client } from "google-auth-library";
 import { comparePassword, hashPassword } from "../../utils/hash/index.js";
 import jwt from "jsonwebtoken";
+import { Token } from "../../DB/models/token.model.js";
+import { generateToken } from "../../utils/token/index.js";
 
 // Register
 export const register = async (req, res) => {
@@ -166,18 +168,30 @@ export const login = async (req, res) => {
   if (!match) {
     throw new Error("invalid credentials", { cause: 401 });
   }
+
   // generate token
-  const token = jwt.sign(
-    { id: userExist._id, name: userExist.fullName },
-    "tokensecretkeyforsarahaapp",
-    { expiresIn: "15m" }
-  );
+  const accessToken = generateToken({
+    payload: { id: userExist._id },
+    options: { expiresIn: "5s" },
+  });
+
+  const refreshToken = generateToken({
+    payload: { id: userExist._id },
+    options: { expiresIn: "7d" },
+  });
+
+  // store in DB
+  await Token.create({
+    token: refreshToken,
+    user: userExist._id,
+    type: "refresh",
+  });
 
   // send response
   return res.status(200).json({
     message: " user logged in successfully",
     succes: true,
-    data: { token },
+    data: { accessToken, refreshToken },
   });
 };
 
@@ -244,4 +258,17 @@ export const resetPassword = async (req, res, next) => {
   return res
     .status(200)
     .json({ message: "Password updated successfully", success: true });
+};
+
+// Logout
+export const logout = async (req, res, next) => {
+  // get data from request
+  const token = req.headers.authorization;
+
+  //store token in DB
+  await Token.create({ token, user: req.user._id });
+
+  return res
+    .status(200)
+    .json({ message: "user logged out successfully", success: true });
 };
