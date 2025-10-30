@@ -253,7 +253,11 @@ export const resetPassword = async (req, res, next) => {
 
   // update user
   userExist.password = hashPassword(newPassword);
+  userExist.credentialUpdatedAt = Date.now();
   await userExist.save();
+
+  // // destroy all refresh tokens
+  // await Token.deleteMany({ user: userExist.id, type: "refresh" });
 
   return res
     .status(200)

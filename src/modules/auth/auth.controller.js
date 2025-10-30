@@ -19,6 +19,7 @@ router.post("/resend-otp", authService.resendOTP);
 router.patch(
   "/reset-password",
   isValide(resetPasswordSchema),
+  isAuthenticated,
   authService.resetPassword
 );
 router.post("/google-login", authService.googleLogin);

@@ -67,6 +67,10 @@ const schema = new Schema(
       secure_url: String,
       public_id: String,
     },
+    credentialUpdatedAt: {
+      type: Date,
+      default: Date.now(),
+    },
   },
   { timestamps: true, toObject: { virtuals: true }, toJSON: { virtuals: true } }
 );
