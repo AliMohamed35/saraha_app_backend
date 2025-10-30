@@ -17,7 +17,6 @@ export const globalErrorHandler = async (error, req, res, next) => {
   if (error.message === "jwt expired") {
     const refreshToken = req.headers.refreshtoken;
     const payload = verifyToken(refreshToken);
-    console.log(payload);
 
     const tokenExist = await Token.findOneAndDelete({
       token: refreshToken,
@@ -38,7 +37,6 @@ export const globalErrorHandler = async (error, req, res, next) => {
       payload: { id: payload.id },
       options: { expiresIn: "7d" },
     });
-    console.log(newRefreshToken);
 
     return res.status(200).json({
       message: "refresh token successfully",

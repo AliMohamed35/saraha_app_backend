@@ -1,6 +1,24 @@
 import { User } from "../../DB/models/user.model.js";
 import fs from "fs";
 import cloudinary from "../../utils/cloud/cloudinary.config.js";
+import { verifyToken } from "../../utils/token/index.js";
+
+export const getProfile = async (req, res, next) => {
+  // get data from token
+  const token = req.headers.authorization;
+
+  const payload = verifyToken(token);
+
+  const userExist = await User.findById({ _id: payload.id });
+
+  return res
+    .status(200)
+    .json({
+      message: "user retrieved successfully",
+      success: true,
+      data: userExist,
+    });
+};
 
 export const deleteAccount = async (req, res) => {
   // delete user folder from server (cloud or local)
@@ -14,6 +32,7 @@ export const deleteAccount = async (req, res) => {
   }
   // delete user from DB
   const deletedUser = await User.deleteOne({ _id: req.user._id });
+
   // send response
   return res.status(200).json({
     message: "user deleted successfully",
