@@ -10,7 +10,8 @@ export const joiSchema = joi
     phoneNumber: generalFields.phoneNumber,
     dob: generalFields.dob,
   })
-  .or("email", "phoneNumber");
+  .or("email", "phoneNumber")
+  .required();
 
 export const resetPasswordSchema = joi.object({
   email: generalFields.email.required(),

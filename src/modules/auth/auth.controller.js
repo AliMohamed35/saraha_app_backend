@@ -9,8 +9,8 @@ const router = Router();
 
 router.post(
   "/register",
+  fileUpload().none(), // parses body
   isValide(joiSchema),
-  fileUpload().none(),
   authService.register
 ); // The func must return 3 args so that's why in asyncH we return function with 3.
 router.post("/login", authService.login);
@@ -19,7 +19,7 @@ router.post("/resend-otp", authService.resendOTP);
 router.patch(
   "/reset-password",
   isValide(resetPasswordSchema),
-  isAuthenticated,
+  // isAuthenticated,
   authService.resetPassword
 );
 router.post("/google-login", authService.googleLogin);

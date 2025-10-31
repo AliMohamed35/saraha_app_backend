@@ -3,9 +3,8 @@ import joi from "joi";
 export const isValide = (joiSchema) => {
   // schema is changeable for every service thats why we need it to be parameter (dynamic)
   return (req, res, next) => {
-    const { value, error } = joiSchema.validate(req.body, {
-      abortEarly: false,
-    });
+    const data = { ...req.body, ...req.params, ...req.query };
+    const { error } = joiSchema.validate(data, { abortEarly: false });
 
     if (error) {
       let errMessage = error.details.map((err) => {
@@ -29,6 +28,7 @@ export const generalFields = {
     .regex(/^[a-zA-Z0-9]{8,30}$/),
   name: joi.string().min(3).max(30),
   dob: joi.date(),
-  otp: joi.number(),
+  otp: joi.number().max(5),
   rePassword: (ref) => joi.string().min(8).valid(joi.ref(ref)),
+  objectId: joi.string().hex().length(24),
 };
