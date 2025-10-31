@@ -162,17 +162,20 @@ export const login = async (req, res) => {
   if (userExist.isVerified == false) {
     throw new Error("user not verified", { cause: 401 });
   }
-
   // compare password
   const match = comparePassword(password, userExist.password);
   if (!match) {
     throw new Error("invalid credentials", { cause: 401 });
   }
+  if (userExist.deletedAt) {
+    userExist.deletedAt = undefined;
+    await userExist.save();
+  }
 
   // generate token
   const accessToken = generateToken({
     payload: { id: userExist._id },
-    options: { expiresIn: "5s" },
+    options: { expiresIn: "1d" },
   });
 
   const refreshToken = generateToken({
@@ -254,6 +257,8 @@ export const resetPassword = async (req, res, next) => {
   // update user
   userExist.password = hashPassword(newPassword);
   userExist.credentialUpdatedAt = Date.now();
+  userExist.otp = undefined;
+  userExist.otpExpire = undefined;
   await userExist.save();
 
   // // destroy all refresh tokens

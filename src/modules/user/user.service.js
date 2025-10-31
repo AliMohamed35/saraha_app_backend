@@ -1,7 +1,12 @@
 import { User } from "../../DB/models/user.model.js";
 import fs from "fs";
-import cloudinary from "../../utils/cloud/cloudinary.config.js";
+import cloudinary, {
+  deleteFolder,
+  uploadFiles,
+  uploadFile,
+} from "../../utils/cloud/cloudinary.config.js";
 import { verifyToken } from "../../utils/token/index.js";
+import { Token } from "../../DB/models/token.model.js";
 
 export const getProfile = async (req, res, next) => {
   // get data from token
@@ -11,28 +16,20 @@ export const getProfile = async (req, res, next) => {
 
   const userExist = await User.findById({ _id: payload.id });
 
-  return res
-    .status(200)
-    .json({
-      message: "user retrieved successfully",
-      success: true,
-      data: userExist,
-    });
+  return res.status(200).json({
+    message: "user retrieved successfully",
+    success: true,
+    data: userExist,
+  });
 };
 
 export const deleteAccount = async (req, res) => {
-  // delete user folder from server (cloud or local)
-  if (req.user.profilePic.public_id) {
-    // delete the content of the folder first
-    await cloudinary.api.delete_resources_by_prefix(
-      `saraha-app/users/${req.user._id}`
-    );
-    // to delete the folder it must be empty
-    await cloudinary.api.delete_folder(`saraha-app/users/${req.user._id}`);
-  }
-  // delete user from DB
-  const deletedUser = await User.deleteOne({ _id: req.user._id });
+  const deletedUser = await User.updateOne(
+    { _id: req.user._id },
+    { deletedAt: Date.now(), credentialUpdatedAt: Date.now() }
+  );
 
+  await Token.deleteMany({ user: req.user._id }); // delete all tokens related to this user when deleted so he don't get tokens again.
   // send response
   return res.status(200).json({
     message: "user deleted successfully",
@@ -74,14 +71,12 @@ export const uploadProfilePictureCloud = async (req, res, next) => {
   // delete the old image from the cloud
   // await cloudinary.uploader.destroy(user.profilePic.public_id);
 
+  let uploadOptions = { folder: `saraha-app/users/${user._id}/profile-pic` };
   // upload new file
-  const { secure_url, public_id } = await cloudinary.uploader.upload(
-    req.file.path,
-    {
-      folder: `saraha-app/users/${user._id}/Profile Picture`,
-      public_id: user.profilePic.public_id, // better than the destroy (more optimized)
-    }
-  );
+  const { secure_url, public_id } = await uploadFile({
+    path: file.path,
+    options: uploadOptions,
+  });
 
   // update in data base
   await User.updateOne(

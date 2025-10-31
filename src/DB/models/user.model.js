@@ -71,6 +71,9 @@ const schema = new Schema(
       type: Date,
       default: Date.now(),
     },
+    deletedAt: {
+      type: Date,
+    },
   },
   { timestamps: true, toObject: { virtuals: true }, toJSON: { virtuals: true } }
 );
