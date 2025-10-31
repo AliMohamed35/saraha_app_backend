@@ -24,3 +24,29 @@ export const sendMessage = async (req, res, next) => {
     .status(201)
     .json({ message: "Message sent successfully!", success: true });
 };
+
+export const getMessage = async (req, res, next) => {
+  // get data from req
+  const { id } = req.params;
+
+  const messageExist = await Message.findOne(
+    {
+      _id: id,
+      receiver: req.user._id, // the user that is logged in (you)
+    },
+    {},
+    {
+      populate: [{ path: "receiver", select: "-password updatedAt createdAt" }],
+    }
+  );
+
+  if (!messageExist) {
+    throw new Error("Message doesn't exist", { cause: 404 });
+  }
+
+  res.status(201).json({
+    message: "Message retrieved successfully!",
+    success: true,
+    data: { messageExist },
+  });
+};

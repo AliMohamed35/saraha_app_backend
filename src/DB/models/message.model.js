@@ -1,10 +1,12 @@
 import { Schema, model } from "mongoose";
+import { User } from "./user.model.js";
 
 const schema = new Schema(
   {
     receiver: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "user",
+      required: true,
     },
     content: {
       type: String,

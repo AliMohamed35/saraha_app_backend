@@ -1,3 +1,4 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 import bootstrap from "./app.controller.js";
 import express from "express";
 import { User } from "./DB/models/user.model.js";

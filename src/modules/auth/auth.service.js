@@ -3,7 +3,6 @@ import { sendMail } from "../../utils/email/index.js";
 import { generateOTP } from "../../utils/otp/index.js";
 import { OAuth2Client } from "google-auth-library";
 import { comparePassword, hashPassword } from "../../utils/hash/index.js";
-import jwt from "jsonwebtoken";
 import { Token } from "../../DB/models/token.model.js";
 import { generateToken } from "../../utils/token/index.js";
 
