@@ -6,7 +6,7 @@ import * as userService from "./user.service.js";
 import { isAuthenticated } from "../../middleware/auth.middleware.js";
 const router = Router();
 
-router.get("/", isAuthenticated, userService.getProfile);
+// router.get("/", isAuthenticated, userService.getProfile);
 router.delete("/", isAuthenticated, userService.deleteAccount);
 router.post(
   "/upload-profile-picture",
@@ -21,5 +21,7 @@ router.post(
   fileUploadCloud().single("profilePicture"),
   userService.uploadProfilePictureCloud
 );
+//Get profile with messages
+router.get("/", isAuthenticated, userService.getProfile);
 
 export default router;

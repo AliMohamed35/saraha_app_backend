@@ -7,21 +7,22 @@ import cloudinary, {
 } from "../../utils/cloud/cloudinary.config.js";
 import { verifyToken } from "../../utils/token/index.js";
 import { Token } from "../../DB/models/token.model.js";
+import { Message } from "../../DB/models/message.model.js";
 
-export const getProfile = async (req, res, next) => {
-  // get data from token
-  const token = req.headers.authorization;
+// export const getProfile = async (req, res, next) => {
+//   // get data from token
+//   const token = req.headers.authorization;
 
-  const payload = verifyToken(token);
+//   const payload = verifyToken(token);
 
-  const userExist = await User.findById({ _id: payload.id });
+//   const userExist = await User.findById({ _id: payload.id });
 
-  return res.status(200).json({
-    message: "user retrieved successfully",
-    success: true,
-    data: userExist,
-  });
-};
+//   return res.status(200).json({
+//     message: "user retrieved successfully",
+//     success: true,
+//     data: userExist,
+//   });
+// };
 
 export const deleteAccount = async (req, res) => {
   const deletedUser = await User.updateOne(
@@ -88,5 +89,18 @@ export const uploadProfilePictureCloud = async (req, res, next) => {
     message: "profile picture updated successfully",
     success: true,
     data: { secure_url, public_id },
+  });
+};
+
+export const getProfile = async (req, res, next) => {
+  const user = await User.findOne(
+    { _id: req.user._id },
+    {},
+    { populate: [{ path: "messages" }] }
+  );
+  return res.status(200).json({
+    message: "user retrieved succesffuly",
+    success: true,
+    data: { user },
   });
 };

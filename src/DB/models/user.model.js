@@ -1,4 +1,5 @@
 import { model, Schema } from "mongoose";
+import { type } from "os";
 
 // Schema
 const schema = new Schema(
@@ -91,6 +92,12 @@ schema.virtual("fullName").set(function (value) {
 
 schema.virtual("age").get(function () {
   return new Date().getFullYear() - new Date(this.dob).getFullYear();
+});
+
+schema.virtual("messages", {
+  ref: "Message",
+  localField: "_id",
+  foreignField: "receiver",
 });
 
 // Model
