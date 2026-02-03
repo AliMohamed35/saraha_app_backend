@@ -9,7 +9,6 @@ export async function sendMail({ to, subject, html }) {
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.USER_PASS,
-      // pass: "nxau emlg rgkc gjes",
     },
   });
 
